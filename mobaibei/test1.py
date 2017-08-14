@@ -7,7 +7,7 @@ Created on Tue Aug 08 17:13:17 2017
 
 import pandas as pd
 import os
-import pygeohash
+#import pygeohash
 
 def read_data(name_):
     data_test = pd.read_csv('D:/mobai/data/trainstartloc/'+name_,header=None)
@@ -32,11 +32,12 @@ def read_testdata(test_file):
     return test_data
 def get_endlocname(tlss_g,v):
     tl_gg = tlss_g.get_group(v)
+    tl_gg.sort()
     tile = tl_gg.index.levels[0]
     tila = tl_gg.index.labels[0]
     tlss_list = tile[tila].tolist()
     if len(tlss_list)==2:
-        re = [tlss_list[0],tlss_list[0],tlss_list[1]]#.extend(0,tlss_list[0])
+        re = [tlss_list[1],tlss_list[1],tlss_list[0]]#.extend(0,tlss_list[0])
 #        return re
     elif len(tlss_list)==1:
         re = [tlss_list[0]]*3
@@ -44,10 +45,26 @@ def get_endlocname(tlss_g,v):
     elif len(tlss_list)==0:
         re = ['0']*3
     else:
-        re = tlss_list[0:3]
+        re = tlss_list[-3:]
     return re
 
+import pygeohash
+all_w = [str(x) for x in range(10)]
+zm = list(set('bcdefghijklmnopqrstuvwxyz'))
+for azm in zm:
+    all_w.append(azm)
+s_gh = []
+for i_a in all_w[1:]:
+    s_gh.append(pygeohash.geohash_approximate_distance('wx4g400','wx4g4'+i_a+'0'))
+print pygeohash.geohash_approximate_distance('wx4g411','wx4g411')
+
 traindata = read_testdata('D:/mobai/data/train.csv')
+#==============================================================================
+# traindata['distance_start2end'] = [pygeohash.geohash_approximate_distance(traindata.geohashed_start_loc[x],traindata.geohashed_end_loc[x]) for x in range(len(traindata))]
+# traindata['distance_start2end'].to_csv('D:/mobai/data/distance_start2endtrain.csv',index = False)
+#==============================================================================
+distance_start2end = pd.read_csv('D:/mobai/data/distance_start2endtrain.csv')
+traindata = pd.concat([traindata, distance_start2end], axis=1)
 
 trainlocstart_grop = traindata.groupby('geohashed_start_loc')
 start_l = []
@@ -78,32 +95,34 @@ start2end = pd.DataFrame({'geohashed_start_loc':start_l,
                           'end_loc1':end_l1,
                           'end_loc2':end_l2,
                           'end_loc3':end_l3})
-start2end.to_csv('testresults.csv',index = False)
+start2end.to_csv('testresults1.csv',index = False)
 
-import random
-start2end = pd.read_csv('testresults.csv')
-testdata = read_testdata('D:/mobai/data/test.csv')
-testd_re = pd.merge(testdata,start2end,how = 'left',on = ['geohashed_start_loc','hoursection'])
-print sum(testd_re['end_loc1'].isnull())
-
-testd_re_gr_s = testd_re.groupby('geohashed_start_loc')
-for n,m in testd_re_gr_s:
-    logi_end1 = pd.isnull(m.end_loc1)
-    logi_n_end1 = pd.notnull(m.end_loc1)
-    s_le = sum(logi_end1)
-    if s_le>0 and s_le<len(m):
-        m_samp = m.ix[logi_n_end1,['end_loc1','end_loc2','end_loc3']]
-        nul_v = random.sample(m_samp.values.tolist(),1)
-        m.ix[logi_end1,'end_loc1'] = nul_v[0]
-        m.ix[logi_end1,'end_loc2'] = nul_v[1]
-        m.ix[logi_end1,'end_loc3'] = nul_v[2]
-        print nul_v
-#    elif s_le==len(m)
-#    for logi_i in logi_end1:
-#        if
-print sum(testd_re['end_loc1'].isnull())
-re_f = testd_re.ix[:,['orderid','end_loc1','end_loc2','end_loc3']]
-re_f.to_csv('results1.csv',index=False,header = False)
+#==============================================================================
+# import random
+# start2end = pd.read_csv('testresults.csv')
+# testdata = read_testdata('D:/mobai/data/test.csv')
+# testd_re = pd.merge(testdata,start2end,how = 'left',on = ['geohashed_start_loc','hoursection'])
+# print sum(testd_re['end_loc1'].isnull())
+# 
+# testd_re_gr_s = testd_re.groupby('geohashed_start_loc')
+# for n,m in testd_re_gr_s:
+#     logi_end1 = pd.isnull(m.end_loc1)
+#     logi_n_end1 = pd.notnull(m.end_loc1)
+#     s_le = sum(logi_end1)
+#     if s_le>0 and s_le<len(m):
+#         m_samp = m.ix[logi_n_end1,['end_loc1','end_loc2','end_loc3']]
+#         nul_v = random.sample(m_samp.values.tolist(),1)
+#         m.ix[logi_end1,'end_loc1'] = nul_v[0]
+#         m.ix[logi_end1,'end_loc2'] = nul_v[1]
+#         m.ix[logi_end1,'end_loc3'] = nul_v[2]
+#         print nul_v
+# #    elif s_le==len(m)
+# #    for logi_i in logi_end1:
+# #        if
+# print sum(testd_re['end_loc1'].isnull())
+# re_f = testd_re.ix[:,['orderid','end_loc1','end_loc2','end_loc3']]
+# re_f.to_csv('results1.csv',index=False,header = False)
+#==============================================================================
 
 #testlocstart_grop = testdata.groupby('geohashed_start_loc')
 #for nmtlg,telg in testlocstart_grop:
